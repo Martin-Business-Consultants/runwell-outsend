@@ -21,6 +21,10 @@
       <% if @connection.last_delivered_at %>
         <p class="txt-small txt-subtle margin-none">Last sent <%= time_ago_in_words(@connection.last_delivered_at) %> ago · <%= pluralize @connection.delivered_count, "message" %> so far.</p>
       <% end %>
+      <% sender = Outsend::Connection.effective_sender %>
+      <% if source && Outsend::Connection.unsendable_domain?(sender) %>
+        <p class="txt-small txt-negative margin-none">Mail would come from <%= sender %>, which Outsend refuses: it sends only for domains verified in your Outsend account. Set who mail comes from below.</p>
+      <% end %>
       <% if @connection.last_error.present? %>
         <p class="txt-small txt-negative margin-none">Last failure<%= " " + time_ago_in_words(@connection.last_error_at) + " ago" if @connection.last_error_at %>: <%= @connection.last_error %></p>
       <% end %>
@@ -38,10 +42,32 @@
 
     <section class="settings__section flex flex-column gap">
       <header>
+        <h2 class="divider">Send as</h2>
+      </header>
+      <p class="txt-small txt-subtle margin-none">
+        Outsend sends only from domains verified in your Outsend account. Runwell’s sender is <%= Setting.current.mail_sender %> (<%= link_to "Settings › Email", settings_email_path, class: "txt-link" %>).
+        To send through Outsend from another address, give one on a verified domain: mail goes out from it, and replies still go to Runwell’s sender. Leave it blank to send as Runwell’s sender.
+      </p>
+      <%= form_with model: @connection, url: outsend_settings_path, method: :patch, scope: :connection, namespace: "send_as", class: "flex flex-column gap txt-small" do |form| %>
+        <div class="flex flex-wrap gap-half">
+          <label class="flex flex-column gap-half flex-item-grow">
+            <span class="font-weight-bold">Address</span>
+            <%= form.email_field :send_as_email, class: "input", placeholder: "no-reply@your-verified-domain.com", autocomplete: "off" %>
+          </label>
+          <label class="flex flex-column gap-half flex-item-grow">
+            <span class="font-weight-bold">Name</span>
+            <%= form.text_field :send_as_name, class: "input", placeholder: "Runwell’s sender name", autocomplete: "off" %>
+          </label>
+        </div>
+        <button type="submit" class="btn btn--link center">Save</button>
+      <% end %>
+    </section>
+
+    <section class="settings__section flex flex-column gap">
+      <header>
         <h2 class="divider">API key</h2>
       </header>
       <p class="txt-small txt-subtle margin-none">The key is from your Outsend account. It’s stored encrypted, and hidden here until you click the eye.</p>
-      <p class="txt-small txt-subtle margin-none">Mail comes from <%= Setting.current.mail_sender %>, which needs to be on a domain Outsend can send for. <%= link_to "Change the sender", settings_email_path, class: "txt-link" %>.</p>
       <%= form_with model: @connection, url: outsend_settings_path, method: :patch, scope: :connection, class: "flex flex-column gap txt-small" do |form| %>
         <label class="flex flex-column gap-half">
           <span class="font-weight-bold">API key</span>

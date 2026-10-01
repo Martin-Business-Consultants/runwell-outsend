@@ -3,9 +3,9 @@ module Outsend
   class SettingsController < ::ApplicationController
     require_permission :manage_settings
     agent_tool :show_outsend_settings, on: :show, title: "Show the Outsend mail connection"
-    agent_tool :update_outsend_settings, on: :update, title: "Save the Outsend API key",
-      description: "api_key: from the Outsend account. Who mail comes from is the install's sender (update_email_settings), on a domain Outsend can send for.",
-      params: { connection: { api_key: "string!" } }
+    agent_tool :update_outsend_settings, on: :update, title: "Save the Outsend API key, or who mail through Outsend comes from",
+      description: "api_key: from the Outsend account (blank keeps the saved one). send_as_email and send_as_name: an address on a domain verified in Outsend that mail through Outsend comes from, with the install's sender (update_email_settings) as its Reply-To; blank sends as the install's sender.",
+      params: { connection: { api_key: "string", send_as_email: "string", send_as_name: "string" } }
     agent_tool :forget_outsend_key, on: :destroy, title: "Forget the saved Outsend API key"
 
     before_action :set_connection
@@ -14,10 +14,12 @@ module Outsend
     end
 
     def update
-      key = params.expect(connection: [ :api_key ])[:api_key].to_s.strip
-      return redirect_to outsend_settings_path, alert: "Paste the API key." if key.blank?
+      attributes = params.expect(connection: [ :api_key, :send_as_email, :send_as_name ])
+      key = attributes.delete(:api_key).to_s.strip
+      attributes[:api_key] = key if key.present?
+      return redirect_to outsend_settings_path, alert: "Paste the API key." if attributes.empty?
 
-      if @connection.update(api_key: key)
+      if @connection.update(attributes)
         redirect_to outsend_settings_path, notice: "Saved. Send a test email to check it."
       else
         redirect_to outsend_settings_path, alert: @connection.errors.full_messages.to_sentence

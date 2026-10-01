@@ -13,6 +13,11 @@ module Outsend
 
     encrypts :api_key
 
+    normalizes :send_as_email, with: ->(value) { value.strip.downcase.presence }
+    normalizes :send_as_name, with: ->(value) { value.strip.presence }
+
+    validates :send_as_email, format: { with: URI::MailTo::EMAIL_REGEXP, message: "isn't an email address" }, allow_nil: true
+    validate :send_as_on_a_real_domain
     validate :ensure_singleton, on: :create
 
     class << self
@@ -46,9 +51,29 @@ module Outsend
 
     def configured? = self.class.key.present?
 
+    # The address mail through Outsend comes from: the one set here, else the install's sender.
+    def self.from_address(original = nil)
+      send_as = current&.send_as_email.presence or return
+      name = current.send_as_name.presence || Mail::Address.new(original.to_s).display_name.presence rescue nil
+      Mail::Address.new(send_as).tap { it.display_name = name if name }.to_s
+    end
+
+    # A domain Outsend will refuse whatever the account holds: no dot, or this machine.
+    def self.unsendable_domain?(address)
+      domain = Mail::Address.new(address.to_s).domain.to_s rescue ""
+      domain.blank? || !domain.include?(".") || domain.in?(%w[localhost localhost.localdomain]) || domain.end_with?(".local", ".test", ".example")
+    end
+
+    # Who mail through Outsend will come from right now.
+    def self.effective_sender = from_address(Setting.current.mail_sender) || Setting.current.mail_sender
+
     def forget_key! = update!(api_key: nil)
 
     private
+      def send_as_on_a_real_domain
+        errors.add(:send_as_email, "needs a domain verified in Outsend, not this machine's") if send_as_email && self.class.unsendable_domain?(send_as_email)
+      end
+
       def ensure_singleton
         errors.add(:base, "There is already an Outsend connection") if Connection.exists?
       end
