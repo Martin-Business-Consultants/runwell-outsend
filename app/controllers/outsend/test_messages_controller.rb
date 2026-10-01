@@ -7,7 +7,7 @@ module Outsend
 
     def create
       to = params[:to].presence || current_user.email_address
-      TestMailer.check(to: to).deliver_now
+      TestMailer.check(to: to, host: request.host).deliver_now
       redirect_to outsend_settings_path, notice: "Sent a test email to #{to}."
     rescue StandardError => error
       Connection.note_error!(error.message)
