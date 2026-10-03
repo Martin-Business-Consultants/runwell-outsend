@@ -1,12 +1,20 @@
 <% @page_title = "Outsend" %>
 <%= render "settings/header", current: :outsend %>
 
+<%# Saving the sender or the key swaps this frame in place, status included, rather than the page. %>
+<turbo-frame id="outsend_settings">
 <section class="settings">
   <div class="settings__panel panel shadow txt-align-start">
     <section class="settings__section flex flex-column gap">
       <header>
         <h2 class="divider">Mail through Outsend</h2>
       </header>
+
+      <% if turbo_frame_request? && flash[:alert].present? %>
+        <p class="txt-small txt-negative margin-none" role="alert"><%= flash[:alert] %></p>
+      <% elsif turbo_frame_request? && flash[:notice].present? %>
+        <p class="txt-small txt-positive margin-none" role="status"><%= flash[:notice] %></p>
+      <% end %>
 
       <% source = Outsend::Connection.key_source %>
       <% if source %>
@@ -51,12 +59,12 @@
       <%= form_with model: @connection, url: outsend_settings_path, method: :patch, scope: :connection, namespace: "send_as", class: "flex flex-column gap txt-small" do |form| %>
         <div class="flex flex-wrap gap-half">
           <label class="flex flex-column gap-half flex-item-grow">
-            <span class="font-weight-bold">Address</span>
-            <%= form.email_field :send_as_email, class: "input", placeholder: "no-reply@your-verified-domain.com", autocomplete: "off" %>
-          </label>
-          <label class="flex flex-column gap-half flex-item-grow">
             <span class="font-weight-bold">Name</span>
             <%= form.text_field :send_as_name, class: "input", placeholder: "Runwell’s sender name", autocomplete: "off" %>
+          </label>
+          <label class="flex flex-column gap-half flex-item-grow">
+            <span class="font-weight-bold">Address</span>
+            <%= form.email_field :send_as_email, class: "input", placeholder: "no-reply@your-verified-domain.com", autocomplete: "off" %>
           </label>
         </div>
         <button type="submit" class="btn btn--link center">Save</button>
@@ -83,3 +91,4 @@
     </section>
   </div>
 </section>
+</turbo-frame>
