@@ -4,8 +4,6 @@ json.active source.present?
 json.key_source source
 json.sender Outsend::Connection.effective_sender
 json.install_sender Setting.current.mail_sender
-json.send_as_email @connection.send_as_email
-json.send_as_name @connection.send_as_name
 json.sender_will_be_refused Outsend::Connection.unsendable_domain?(Outsend::Connection.effective_sender)
 json.last_delivered_at @connection.last_delivered_at
 json.delivered_count @connection.delivered_count

@@ -1,7 +1,7 @@
 <% @page_title = "Outsend" %>
 <%= render "settings/header", current: :outsend %>
 
-<%# Saving the sender or the key swaps this frame in place, status included, rather than the page. %>
+<%# Saving the key swaps this frame in place, status included, rather than the page. %>
 <turbo-frame id="outsend_settings">
 <section class="settings">
   <div class="settings__panel panel shadow txt-align-start">
@@ -31,44 +31,24 @@
       <% end %>
       <% sender = Outsend::Connection.effective_sender %>
       <% if source && Outsend::Connection.unsendable_domain?(sender) %>
-        <p class="txt-small txt-negative margin-none">Mail would come from <%= sender %>, which Outsend refuses: it sends only for domains verified in your Outsend account. Set who mail comes from below.</p>
+        <p class="txt-small txt-negative margin-none">Mail would come from <%= sender %>, which Outsend refuses: it sends only for domains verified in your Outsend account. Set who mail comes from in <%= link_to "Settings › Email", settings_email_path, class: "txt-link" %>.</p>
       <% end %>
       <% if @connection.last_error.present? %>
         <p class="txt-small txt-negative margin-none">Last failure<%= " " + time_ago_in_words(@connection.last_error_at) + " ago" if @connection.last_error_at %>: <%= @connection.last_error %></p>
       <% end %>
 
       <% if source %>
-        <%= form_with url: outsend_test_message_path, class: "flex flex-wrap align-center gap-half txt-small" do |form| %>
-          <%= form.email_field :to, value: Current.user.email_address, class: "input", autocomplete: "off", placeholder: "you@agency.example" %>
-          <button type="submit" class="btn">
-            <%= icon_tag "paper-plane" %>
-            <span>Send a test email</span>
-          </button>
-        <% end %>
+        <p class="txt-small txt-subtle margin-none">Send a test email from <%= link_to "Settings › Email", settings_email_path, class: "txt-link" %> to check it.</p>
       <% end %>
     </section>
 
     <section class="settings__section flex flex-column gap">
       <header>
-        <h2 class="divider">Send as</h2>
+        <h2 class="divider">Who mail comes from</h2>
       </header>
       <p class="txt-small txt-subtle margin-none">
-        Outsend sends only from domains verified in your Outsend account. Runwell’s sender is <%= Setting.current.mail_sender %> (<%= link_to "Settings › Email", settings_email_path, class: "txt-link" %>).
-        To send through Outsend from another address, give one on a verified domain: mail goes out from it, and replies still go to Runwell’s sender. Leave it blank to send as Runwell’s sender.
+        <%= Setting.current.mail_sender %>, Runwell’s sender (<%= link_to "Settings › Email", settings_email_path, class: "txt-link" %>). Outsend sends only from domains verified in your Outsend account, so use an address on one.
       </p>
-      <%= form_with model: @connection, url: outsend_settings_path, method: :patch, scope: :connection, namespace: "send_as", class: "flex flex-column gap txt-small" do |form| %>
-        <div class="flex flex-wrap gap-half">
-          <label class="flex flex-column gap-half flex-item-grow">
-            <span class="font-weight-bold">Name</span>
-            <%= form.text_field :send_as_name, class: "input", placeholder: "Runwell’s sender name", autocomplete: "off" %>
-          </label>
-          <label class="flex flex-column gap-half flex-item-grow">
-            <span class="font-weight-bold">Address</span>
-            <%= form.email_field :send_as_email, class: "input", placeholder: "no-reply@your-verified-domain.com", autocomplete: "off" %>
-          </label>
-        </div>
-        <button type="submit" class="btn btn--link center">Save</button>
-      <% end %>
     </section>
 
     <section class="settings__section flex flex-column gap">

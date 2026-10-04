@@ -1,6 +1,7 @@
 module Outsend
   # A Runwell plugin: outbound mail through Outsend (getoutsend.com). Paste the API key in
-  # Settings > Outsend and every email the app sends goes out through Outsend's SMTP; the
+  # Settings > Outsend and every email the app sends goes out through Outsend's SMTP, from the
+  # sender set in Settings > Email (tested there too). The
   # core's own SMTP settings, if any, only apply while the plugin is off. A Mail interceptor
   # decides per message, so switching the plugin on or off needs no restart. It owns one table.
   class Engine < ::Rails::Engine
@@ -9,7 +10,6 @@ module Outsend
       app.routes.append do
         scope "outsend", module: "outsend", as: "outsend" do
           resource :settings, only: %i[show update destroy]
-          resource :test_message, only: :create
         end
       end
     end
@@ -23,9 +23,11 @@ module Outsend
 
     config.to_prepare do
       Runwell::Plugins.register :outsend, name: "Outsend", version: Outsend::VERSION, author: "Runwell",
-        enabled_by_default: false, requires: ">= 2.1.0", homepage: "https://github.com/Martin-Business-Consultants/runwell-outsend",
-        description: "Send Runwell’s email through Outsend: paste your API key and every message goes out through Outsend’s SMTP, with no mail server settings to manage."
+        enabled_by_default: false, requires: ">= 2.17.0", homepage: "https://github.com/Martin-Business-Consultants/runwell-outsend",
+        description: "Send Runwell’s email through Outsend: paste your API key and every message goes out through Outsend’s SMTP, from the sender in Settings › Email, with no mail server to manage."
       Runwell::Plugins.settings :outsend, "Outsend", -> { outsend_settings_path }
+      # Settings > Email says mail goes out through Outsend; the sender and the test live there.
+      Runwell::Plugins.slot :email_outbound, :outsend, "outsend/slots/email_outbound"
     end
   end
 end

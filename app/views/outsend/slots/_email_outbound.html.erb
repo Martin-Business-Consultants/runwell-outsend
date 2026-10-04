@@ -1,0 +1,10 @@
+<%# locals: () %>
+<%# Settings > Email, How it goes out: mail goes through Outsend when it has a key. %>
+<% source = Outsend::Connection.key_source %>
+<p class="txt-small margin-none">
+  <% if source %>
+    <%= status_tag "Outsend", highlight: true %> Mail goes out through Outsend, from the sender above. The key is in <%= link_to "Settings › Outsend", outsend_settings_path, class: "txt-link" %>.
+  <% else %>
+    <%= status_tag "Outsend" %> Outsend is on but has no key yet: paste it in <%= link_to "Settings › Outsend", outsend_settings_path, class: "txt-link" %>.
+  <% end %>
+</p>

@@ -13,6 +13,7 @@ class OutsendSettingsControllerTest < ActionDispatch::IntegrationTest
     assert_match "hello@brem.io", response.body
     assert_select "a[href='#{settings_email_path}']"
     assert_select "input[name='connection[from_email]']", count: 0
+    assert_select "input[name='connection[send_as_email]']", count: 0
   end
 
   test "a blank key is asked for again" do
